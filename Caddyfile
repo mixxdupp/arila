@@ -1,0 +1,34 @@
+arila.app {
+    # Static files (client build)
+    root * /var/www/arila/client/dist
+    file_server
+
+    # API proxy
+    handle /api/* {
+        reverse_proxy localhost:3001
+    }
+
+    # WebSocket proxy
+    handle /ws {
+        reverse_proxy localhost:3001
+    }
+
+    # SPA fallback: serve index.html for all non-file routes
+    try_files {path} /index.html
+
+    # Security headers (Caddy adds HSTS and TLS automatically)
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "no-referrer"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    }
+
+    # Gzip compression
+    encode gzip
+
+    # Logs (no access logs to avoid IP logging)
+    log {
+        output discard
+    }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "arila",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Zero-knowledge encrypted messenger",
+  "scripts": {
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && npm run dev",
+    "build:client": "cd client && npm run build",
+    "build:server": "cd server && npm run build",
+    "install:all": "cd client && npm install && cd ../server && npm install"
+  },
+  "dependencies": {
+    "ws": "^8.19.0"
+  }
+}
