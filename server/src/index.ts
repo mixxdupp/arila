@@ -2,6 +2,9 @@ import Fastify from "fastify";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import { WebSocketServer } from "ws";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+import fastifyStatic from "@fastify/static";
 import { env } from "./config/env.js";
 import { testConnection, closePool } from "./config/database.js";
 import { authRoutes } from "./routes/auth.js";
@@ -49,7 +52,7 @@ fastify.addHook("onSend", async (_request, reply) => {
       "script-src 'self'",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
-      "connect-src 'self' wss://*.arila.app",
+      "connect-src 'self' wss://*.arila.app wss://*.onrender.com wss://*.up.railway.app",
       "img-src 'self' data:",
       "frame-ancestors 'none'",
       "base-uri 'self'",
@@ -58,9 +61,26 @@ fastify.addHook("onSend", async (_request, reply) => {
   );
 });
 
+// --- Static Files & SPA Fallback ---
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+await fastify.register(fastifyStatic, {
+  root: path.join(__dirname, "../../client/dist"),
+  prefix: "/",
+  wildcard: false,
+});
+
+fastify.setNotFoundHandler((request, reply) => {
+  if (request.url.startsWith("/api/") || request.url.startsWith("/ws")) {
+    return reply.status(404).send({ error: "Not Found" });
+  }
+  return reply.sendFile("index.html");
+});
+
 // --- Plugins ---
 await fastify.register(cors, {
-  origin: env.NODE_ENV === "production" ? "https://arila.app" : "http://localhost:5173",
+  origin: env.NODE_ENV === "production" ? ["https://arila.app", "https://demo.arila.app", /\.onrender\.com$/, /\.up\.railway\.app$/] : "http://localhost:5173",
   credentials: true,
   methods: ["GET", "POST", "DELETE"],
   allowedHeaders: ["Content-Type"],

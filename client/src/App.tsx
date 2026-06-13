@@ -4,6 +4,8 @@ import { RegisterForm } from "./components/auth/RegisterForm";
 import { LoginForm } from "./components/auth/LoginForm";
 import { AppLayout } from "./components/layout/AppLayout";
 import { useAuth } from "./hooks/useAuth";
+import { Analytics } from "@vercel/analytics/react";
+
 
 type AuthView = "login" | "register";
 
@@ -45,6 +47,7 @@ export function App() {
       <ErrorBoundary>
         {isAuthenticated ? <AppLayout /> : <AuthScreen />}
       </ErrorBoundary>
+      <Analytics />
     </div>
   );
 }
