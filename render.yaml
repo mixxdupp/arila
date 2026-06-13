@@ -2,6 +2,7 @@ services:
   - type: web
     name: arila
     env: node
+    plan: free
     buildCommand: "npm --prefix client install && npm --prefix client run build && npm --prefix server install && npm --prefix server run build"
     startCommand: "npm --prefix server start"
     envVars:
