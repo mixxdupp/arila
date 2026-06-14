@@ -19,6 +19,7 @@
     "nanoid": "^5.0.9",
     "pg": "^8.13.1",
     "secure-remote-password": "^0.3.1",
+    "ws": "^8.19.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
