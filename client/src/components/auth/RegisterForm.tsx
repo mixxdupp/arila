@@ -171,10 +171,10 @@ export function RegisterForm({ onSwitchToLogin }: { onSwitchToLogin: () => void 
 
         <button
           type="submit"
-          disabled={loading || !isFormValid}
+          disabled={loading}
           className={`
             w-full h-[44px] mt-2 rounded-xl text-[15px] font-semibold text-black transition-all duration-200 ease-out
-            ${loading || !isFormValid
+            ${loading
               ? "bg-[#2C2C2E] text-[#48484A] cursor-not-allowed"
               : "bg-white hover:bg-[#F2F2F7] active:scale-[0.98] shadow-lg shadow-white/5"}
           `}
