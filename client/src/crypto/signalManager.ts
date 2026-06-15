@@ -302,12 +302,15 @@ export async function initializeKeys(): Promise<{
   );
   await storeSignedPreKey(signedPreKeyData);
 
-  const oneTimePreKeys: Array<{ keyId: number; publicKey: string }> = [];
-  for (let i = 1; i <= 100; i++) {
+  // Generate 100 One-Time PreKeys concurrently for significantly faster login/registration
+  const preKeyPromises = Array.from({ length: 100 }, async (_, index) => {
+    const keyId = index + 1;
     const preKeyPair = await generateKeyPair();
-    await storePreKey({ keyId: i, ...preKeyPair });
-    oneTimePreKeys.push({ keyId: i, publicKey: preKeyPair.publicKey });
-  }
+    await storePreKey({ keyId, ...preKeyPair });
+    return { keyId, publicKey: preKeyPair.publicKey };
+  });
+
+  const oneTimePreKeys = await Promise.all(preKeyPromises);
 
   return {
     identityKey: identityKeyPair.publicKey,
@@ -500,12 +503,14 @@ export async function generateMorePreKeys(
   startId: number,
   count: number
 ): Promise<Array<{ keyId: number; publicKey: string }>> {
-  const oneTimePreKeys: Array<{ keyId: number; publicKey: string }> = [];
-  for (let i = startId; i < startId + count; i++) {
+  const preKeyPromises = Array.from({ length: count }, async (_, index) => {
+    const keyId = startId + index;
     const preKeyPair = await generateKeyPair();
-    await storePreKey({ keyId: i, ...preKeyPair });
-    oneTimePreKeys.push({ keyId: i, publicKey: preKeyPair.publicKey });
-  }
+    await storePreKey({ keyId, ...preKeyPair });
+    return { keyId, publicKey: preKeyPair.publicKey };
+  });
+
+  const oneTimePreKeys = await Promise.all(preKeyPromises);
   return oneTimePreKeys;
 }
 
