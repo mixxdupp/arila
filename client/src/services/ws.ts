@@ -27,11 +27,22 @@ function getReconnectDelay(): number {
   return delay + Math.random() * 1000; // Jitter
 }
 
+let pongTimeout: ReturnType<typeof setTimeout> | null = null;
+
 function startHeartbeat(): void {
   stopHeartbeat();
   heartbeatTimer = setInterval(() => {
     if (socket?.readyState === WebSocket.OPEN) {
       socket.send(JSON.stringify({ type: "ping" }));
+      
+      // If we don't receive a pong within 10 seconds, the connection is dead.
+      // We must actively close it so onclose fires and triggers a reconnect.
+      pongTimeout = setTimeout(() => {
+        if (socket?.readyState === WebSocket.OPEN) {
+          console.warn("[Arila] WebSocket heartbeat timed out, forcing reconnect");
+          socket.close(4001, "Heartbeat timeout");
+        }
+      }, 10000);
     }
   }, 30000);
 }
@@ -40,6 +51,10 @@ function stopHeartbeat(): void {
   if (heartbeatTimer) {
     clearInterval(heartbeatTimer);
     heartbeatTimer = null;
+  }
+  if (pongTimeout) {
+    clearTimeout(pongTimeout);
+    pongTimeout = null;
   }
 }
 
@@ -85,7 +100,17 @@ function openSocket(): void {
 
   socket.onmessage = (event) => {
     try {
-      const data = JSON.parse(event.data as string) as unknown;
+      const data = JSON.parse(event.data as string) as Record<string, unknown>;
+      
+      // Clear pong timeout if this is a pong response
+      if (data && data.type === "pong") {
+        if (pongTimeout) {
+          clearTimeout(pongTimeout);
+          pongTimeout = null;
+        }
+        return; // No need to forward pong to other handlers
+      }
+      
       for (const handler of messageHandlers) {
         handler(data);
       }
