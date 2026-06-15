@@ -362,6 +362,9 @@ export function useMessages() {
         const contact = useContactStore.getState().getContact(contactId);
         if (!contact || !pinRef.current) return;
 
+        // Mark as read immediately to prevent redundant receipts on next render
+        useChatStore.getState().updateMessageStatus(messageId, "read");
+
         const receipt = await sealReceipt(
           contactId,
           contactId,
