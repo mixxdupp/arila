@@ -57,7 +57,7 @@ export function MessageInput({ onSend, recipientId, disabled }: MessageInputProp
           value={text}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
-          placeholder="iMessage"
+          placeholder="Type a secure message..."
           disabled={disabled}
           className="flex-1 bg-transparent px-4 py-2 text-[15px] text-white placeholder:text-text-muted outline-none min-w-0"
         />
