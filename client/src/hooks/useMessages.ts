@@ -33,6 +33,11 @@ let processingChain = Promise.resolve();
 const processedMessageIds = new Set<string>();
 const PROCESSED_IDS_MAX = 500;
 
+// Track how many times a message has failed decryption across reconnections.
+// After MAX_DECRYPT_RETRIES, the message is permanently dropped and ACK'd.
+const decryptionFailures = new Map<string, number>();
+const MAX_DECRYPT_RETRIES = 3;
+
 export function useMessages() {
   const { subscribe } = useWebSocket();
   const pin = useAuthStore((s) => s.pin);
@@ -155,12 +160,25 @@ export function useMessages() {
       }
     }
 
-    // No contact could decrypt — drop silently
-    if (currentContacts.length > 0) {
-      console.warn("[Arila] Dropping undecryptable message (stale session data)");
-      return true;
+    // No contact could decrypt — do NOT acknowledge.
+    // Returning false keeps the message in the server queue so it can be
+    // retried on the next reconnect (e.g. after a session key refresh).
+    // Track failure count to eventually drop genuinely corrupt messages.
+    const failKey = pm.id;
+    const failCount = (decryptionFailures.get(failKey) ?? 0) + 1;
+    decryptionFailures.set(failKey, failCount);
+
+    if (failCount >= MAX_DECRYPT_RETRIES) {
+      console.warn("[Arila] Permanently dropping undecryptable message after max retries", { id: pm.id, failCount });
+      decryptionFailures.delete(failKey);
+      return true; // ACK to server — genuinely unrecoverable
     }
 
+    console.warn("[Arila] Decryption failed, keeping in server queue for retry", {
+      id: pm.id,
+      failCount,
+      contactCount: currentContacts.length,
+    });
     return false;
   }
 
