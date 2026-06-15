@@ -101,7 +101,7 @@ export function RegisterForm({ onSwitchToLogin }: { onSwitchToLogin: () => void 
     );
   }
 
-  const isFormValid = username.length >= 3 && password.length >= 8 && confirmPassword.length >= 8;
+
 
   return (
     <AuthLayout>
